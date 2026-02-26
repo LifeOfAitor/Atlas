@@ -18,9 +18,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun Login() {
+fun Login(
+    loginError: String?,
+    onLogin: (server: String, username: String, password: String) -> Unit,
+    onNavigateRegister: () -> Unit
+) {
+    var server by remember { mutableStateOf("10.14.0.111:13000") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -35,15 +41,23 @@ fun Login() {
             modifier = Modifier.size(120.dp),
             tint = Color.Black
         )
-        Spacer(modifier = Modifier.height(230.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+        OutlinedTextField(
+            value = server,
+            onValueChange = { server = it },
+            label = { Text("Servidor IP:Puerto") },
+            singleLine = true,
+            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
         OutlinedTextField(
             value = username,
             onValueChange = { username = it },
             label = { Text("Usuario") },
             singleLine = true,
             shape = RoundedCornerShape(10.dp),
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
         OutlinedTextField(
@@ -53,12 +67,15 @@ fun Login() {
             singleLine = true,
             shape = RoundedCornerShape(10.dp),
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(60.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+        if (!loginError.isNullOrBlank()) {
+            Text(text = loginError, color = Color.Red)
+            Spacer(modifier = Modifier.height(8.dp))
+        }
         Button(
-            onClick = {},
+            onClick = { onLogin(server, username, password) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
@@ -72,13 +89,17 @@ fun Login() {
             text = "Crear una cuenta",
             color = Color.Black,
             fontSize = 16.sp,
-            modifier = Modifier.clickable { }
+            modifier = Modifier.clickable { onNavigateRegister() }
         )
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun LoginPreview() {
-    Login()
+    Login(
+        loginError = null,
+        onLogin = { _, _, _ -> },
+        onNavigateRegister = {}
+    )
 }
-
