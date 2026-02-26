@@ -19,7 +19,13 @@ import androidx.compose.ui.unit.sp
 
 
 @Composable
-fun Footer(selected: String = "", onSelect: (String) -> Unit = {}) {
+fun Footer(
+    selected: String = "",
+    onSelect: (String) -> Unit = {},
+    backgroundColor: Color = Color(0xFF181B23),
+    selectedColor: Color = Color(0xFFFF8C3B),
+    unselectedColor: Color = Color(0xFFB0B3C6)
+) {
     val items = listOf(
         "Inicio" to Icons.Default.Home,
         "Mapa" to Icons.Default.Place,
@@ -29,7 +35,7 @@ fun Footer(selected: String = "", onSelect: (String) -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF181B23))
+            .background(backgroundColor)
             .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
@@ -45,14 +51,14 @@ fun Footer(selected: String = "", onSelect: (String) -> Unit = {}) {
                 Icon(
                     icon,
                     contentDescription = label,
-                    tint = if (isSelected) Color(0xFFFF8C3B) else Color(0xFFB0B3C6),
+                    tint = if (isSelected) selectedColor else unselectedColor,
                     modifier = Modifier.size(28.dp)
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
                     label,
                     fontSize = 12.sp,
-                    color = if (isSelected) Color(0xFFFF8C3B) else Color(0xFFB0B3C6)
+                    color = if (isSelected) selectedColor else unselectedColor
                 )
                 if (isSelected) {
                     Spacer(Modifier.height(2.dp))
@@ -60,7 +66,7 @@ fun Footer(selected: String = "", onSelect: (String) -> Unit = {}) {
                         Modifier
                             .height(2.dp)
                             .width(32.dp)
-                            .background(Color(0xFFFF8C3B))
+                            .background(selectedColor)
                     )
                 } else {
                     Spacer(Modifier.height(4.dp))
