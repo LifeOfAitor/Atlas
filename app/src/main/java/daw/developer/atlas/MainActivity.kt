@@ -1,7 +1,6 @@
 package daw.developer.atlas
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
@@ -10,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -28,11 +28,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import daw.developer.atlas.ui.theme.AtlasTheme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.net.InetAddress
-import kotlin.coroutines.coroutineContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -99,39 +96,60 @@ fun MainContent() {
             onValueChange = { pasahitza = it }
         )
 
-        Button(
-            onClick = {
-                if (ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.INTERNET
-                    ) == PackageManager.PERMISSION_GRANTED
-                ) {
-                    // Konexioa korutina batean egin
-                    scope.launch {
-                        try {
+        Row {
+            Button(
+                onClick = {
+                    if (ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.INTERNET
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        // Konexioa korutina batean egin
+                        scope.launch {
                             val parts = helbidea.split(":")
                             if (parts.size == 2) {
-                                TCPConnection.connect(
+                                TCPConnection.login(
                                     InetAddress.getByName(parts[0]),
                                     parts[1].toInt(),
                                     erabiltzailea,
-                                    pasahitza,
-                                    false
+                                    pasahitza
                                 )
-                            } else {
-                                log = "Helbide formatua: IP:PORTU"
-                            }
-                        } catch (e: Exception) {
-                            log = "Errorea: ${e.message}"
+                            } else log = "Helbide formatua: IP:PORTU"
                         }
-                    }
-                } else {
-                    Toast.makeText(context, "Internet baimena behar da", Toast.LENGTH_SHORT)
-                        .show()
+                    } else
+                        Toast.makeText(context, "Internet baimena behar da", Toast.LENGTH_SHORT)
+                            .show()
                 }
+            ) {
+                Text(text = "Konektatu")
             }
-        ) {
-            Text(text = "Konektatu")
+            Button(
+                onClick = {
+                    if (ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.INTERNET
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        // Konexioa korutina batean egin
+                        scope.launch {
+                            val parts = helbidea.split(":")
+                            if (parts.size == 2) {
+                                TCPConnection.signup(
+                                    InetAddress.getByName(parts[0]),
+                                    parts[1].toInt(),
+                                    erabiltzailea,
+                                    "$erabiltzailea@$erabiltzailea.com",
+                                    pasahitza
+                                )
+                            } else log = "Helbide formatua: IP:PORTU"
+                        }
+                    } else
+                        Toast.makeText(context, "Internet baimena behar da", Toast.LENGTH_SHORT)
+                            .show()
+                }
+            ) {
+                Text(text = "Erregistratu")
+            }
         }
 
         Text(

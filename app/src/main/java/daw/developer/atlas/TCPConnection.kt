@@ -5,8 +5,6 @@ import java.io.*
 import java.net.InetAddress
 import java.net.Socket
 import java.net.SocketException
-import java.net.ConnectException
-import java.net.UnknownHostException
 
 object TCPConnection {
     // Konexio datuak
@@ -57,37 +55,47 @@ object TCPConnection {
     private var connectionJob: Job? = null
 
     // Bezeroa zerbitzarira konektatu eta saioa hasten saiatu
-    suspend fun connect(ip: InetAddress, port: Int, izena: String, pasahitza: String, register: Boolean) {
+    private fun connect(ip: InetAddress, port: Int) {
+        try {
+            // Itxi aurreko konexioa
+            if (alive) closeClient("Konexio zaharra itxi da")
+
+            newLog("Saiatzen $ip:$port -ra konektatzen...", LogType.INFO)
+            println("DEBUG: Konexio saiakera: $ip:$port")
+
+            // Sortu socket-a timeout-arekin
+            client = Socket()
+            client?.connect(java.net.InetSocketAddress(ip, port))
+
+            alive = true
+            this@TCPConnection.ip = ip
+            this@TCPConnection.port = port
+
+            newLog("Socket-a sortu da, stream-ak irekitzen...", LogType.INFO)
+
+            reader = BufferedReader(InputStreamReader(client!!.getInputStream()))
+            writer = PrintWriter(client!!.getOutputStream(), true)
+
+            newLog("Stream-ak ireki dira, autentifikazioa bidaltzen...", LogType.INFO)
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            closeClient("Errorea connect: ${e.message}")
+        }
+    }
+
+    suspend fun login(ip: InetAddress, port: Int, izena: String, pasahitza: String) {
         withContext(Dispatchers.IO) {
-            try {
-                // Itxi aurreko konexioa
-                if (alive)  closeClient("Konexio zaharra itxi da")
-
-                newLog("Saiatzen $ip:$port -ra konektatzen...", LogType.INFO)
-                println("DEBUG: Konexio saiakera: $ip:$port")
-
-                // Sortu socket-a timeout-arekin
-                client = Socket()
-                client?.connect(java.net.InetSocketAddress(ip, port))
-
-                alive = true
-                this@TCPConnection.ip = ip
-                this@TCPConnection.port = port
-
-                newLog("Socket-a sortu da, stream-ak irekitzen...", LogType.INFO)
-
-                reader = BufferedReader(InputStreamReader(client!!.getInputStream()))
-                writer = PrintWriter(client!!.getOutputStream(), true)
-
-                newLog("Stream-ak ireki dira, autentifikazioa bidaltzen...", LogType.INFO)
-
-                val identifikazioa = if (register) "SIGNUP:$izena:$pasahitza" else "LOGIN:$izena:$pasahitza"
+            try
+            {
+                // Konektatu
+                connect(ip, port)
 
                 // Bidali eta jaso erantzuna (blokeoa)
-                writer?.println(identifikazioa)
+                writer?.println("LOGIN:$izena:$pasahitza")
                 writer?.flush()
 
-                newLog("Autentifikazioa bidali da: $identifikazioa", LogType.INFO)
+                newLog("Autentifikazioa bidali da: LOGIN:$izena:$pasahitza", LogType.INFO)
                 newLog("Zerbitzariaren erantzuna itxaroten...", LogType.INFO)
 
                 waitForMessage()
@@ -105,23 +113,33 @@ object TCPConnection {
                     startConnectionMonitoring()
                 } else closeClient("Autentifikazioak huts egin du")
 
-            } catch (e: ConnectException) {
-                newLog("Ezin da zerbitzarira konektatu: ${e.message ?: "Konexio errorea"}", LogType.ERROR)
-                e.printStackTrace()
-                closeClient()
-            } catch (e: UnknownHostException) {
-                newLog("Helbidea ezezaguna: ${e.message ?: "Host- ezezaguna"}", LogType.ERROR)
-                e.printStackTrace()
-                closeClient()
-            } catch (e: SocketException) {
-                newLog("Socket errorea: ${e.message ?: "Socket errorea"}", LogType.ERROR)
-                e.printStackTrace()
-                closeClient()
             } catch (e: Exception) {
-                newLog("Errorea konektatzean: ${e.message ?: "Errore ezezaguna"}", LogType.ERROR)
-                println("DEBUG: Exception: ${e::class.simpleName} - ${e.message}")
                 e.printStackTrace()
+                closeClient("Errorea login: ${e.message}")
+            }
+        }
+    }
+
+    suspend fun signup(ip: InetAddress, port: Int, izena: String, email: String, pasahitza: String) {
+        withContext(Dispatchers.IO) {
+            try
+            {
+                // Konektatu
+                connect(ip, port)
+
+                // Bidali eta jaso erantzuna (blokeoa)
+                writer?.println("SIGNUP:$izena:$email:$pasahitza")
+                writer?.flush()
+
+                newLog("Autentifikazioa bidali da: SIGNUP:$izena:$pasahitza", LogType.INFO)
+                newLog("Zerbitzariaren erantzuna itxaroten...", LogType.INFO)
+
+                waitForMessage()
                 closeClient()
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                closeClient("Errorea signup: ${e.message}")
             }
         }
     }
