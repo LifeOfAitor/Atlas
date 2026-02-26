@@ -10,8 +10,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import daw.developer.atlas.ui.Create
 import daw.developer.atlas.ui.Login
 import daw.developer.atlas.ui.dashboard.DashboardScreen
+import daw.developer.atlas.ui.dashboard.components.JoinTripDialog
+import daw.developer.atlas.ui.profile.ProfileScreen
 import daw.developer.atlas.ui.theme.AtlasTheme
 import java.net.InetAddress
 import kotlinx.coroutines.launch
@@ -26,6 +29,8 @@ class MainActivity : ComponentActivity() {
                 var isLoggedIn by remember { mutableStateOf(false) }
                 var loginError by remember { mutableStateOf<String?>(null) }
                 var currentUser by remember { mutableStateOf("") }
+                var currentScreen by remember { mutableStateOf("Dashboard") }
+                var showJoinDialog by remember { mutableStateOf(false) }
 
                 LaunchedEffect(Unit) {
                     CommandDecoder.deniedEvent = { args ->
@@ -35,9 +40,11 @@ class MainActivity : ComponentActivity() {
                     TCPConnection.connectedEvent = {
                         loginError = null
                         isLoggedIn = true
+                        currentScreen = "Dashboard"
                     }
                     TCPConnection.disconnectedEvent = {
                         isLoggedIn = false
+                        currentScreen = "Dashboard"
                     }
                 }
 
@@ -70,13 +77,37 @@ class MainActivity : ComponentActivity() {
                         onNavigateRegister = { }
                     )
                 } else {
-                    DashboardScreen(
-                        userName = currentUser.ifBlank { "usuario" },
-                        onCreateTrip = { },
-                        onJoinTrip = { },
-                        onNavigateProfile = { },
-                        onNavigateCreate = { }
-                    )
+                    when (currentScreen) {
+                        "Dashboard" -> {
+                            DashboardScreen(
+                                userName = currentUser.ifBlank { "usuario" },
+                                onCreateTrip = { currentScreen = "Create" },
+                                onJoinTrip = { showJoinDialog = true },
+                                onNavigateProfile = { currentScreen = "Profile" },
+                                onNavigateCreate = { currentScreen = "Create" }
+                            )
+
+                            if (showJoinDialog) {
+                                JoinTripDialog(
+                                    onDismiss = { showJoinDialog = false },
+                                    onJoin = { showJoinDialog = false }
+                                )
+                            }
+                        }
+                        "Create" -> {
+                            Create(
+                                onNavigateHome = { currentScreen = "Dashboard" },
+                                onNavigateProfile = { currentScreen = "Profile" }
+                            )
+                        }
+                        else -> {
+                            ProfileScreen(
+                                userName = currentUser.ifBlank { "usuario" },
+                                onNavigateHome = { currentScreen = "Dashboard" },
+                                onNavigateCreate = { currentScreen = "Create" }
+                            )
+                        }
+                    }
                 }
             }
         }
