@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,16 +23,21 @@ class MainActivity : ComponentActivity() {
         setContent {
             AtlasTheme {
                 val scope = rememberCoroutineScope()
-                val isLoggedIn by TCPConnection.connectedState.collectAsState()
+                var isLoggedIn by remember { mutableStateOf(false) }
                 var loginError by remember { mutableStateOf<String?>(null) }
                 var currentUser by remember { mutableStateOf("") }
 
                 LaunchedEffect(Unit) {
                     CommandDecoder.deniedEvent = { args ->
                         loginError = args.reason
+                        isLoggedIn = false
                     }
                     TCPConnection.connectedEvent = {
                         loginError = null
+                        isLoggedIn = true
+                    }
+                    TCPConnection.disconnectedEvent = {
+                        isLoggedIn = false
                     }
                 }
 
@@ -49,12 +53,11 @@ class MainActivity : ComponentActivity() {
                                     val host = parts[0]
                                     val port = parts[1].toIntOrNull()
                                     if (port != null) {
-                                        TCPConnection.connect(
+                                        TCPConnection.login(
                                             InetAddress.getByName(host),
                                             port,
                                             username,
-                                            password,
-                                            false
+                                            password
                                         )
                                     } else {
                                         loginError = "Puerto invalido"
