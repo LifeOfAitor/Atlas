@@ -20,10 +20,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AtlasTheme {
+                // Navegacion simple por estado para prototipo visual.
                 var showCreate by remember { mutableStateOf(false) }
                 var showJoinDialog by remember { mutableStateOf(false) }
                 var showProfile by remember { mutableStateOf(false) }
 
+                // Enrutado basico segun el estado actual.
                 when {
                     showCreate -> {
                         Create(
@@ -61,6 +63,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                // Modal "Unirme" solo desde el dashboard.
                 if (showJoinDialog && !showCreate && !showProfile) {
                     JoinTripDialog(
                         onDismiss = { showJoinDialog = false },

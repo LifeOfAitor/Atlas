@@ -23,6 +23,7 @@ fun ProfileStatsRow(
     photos: String,
     modifier: Modifier = Modifier
 ) {
+    // Tarjetas de estadisticas principales.
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -57,4 +58,3 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
         )
     }
 }
-

@@ -25,6 +25,7 @@ fun DashboardTopBar(
     userName: String,
     modifier: Modifier = Modifier
 ) {
+    // Top bar simple con marca y saludo.
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -70,4 +71,3 @@ fun DashboardTopBar(
         }
     }
 }
-

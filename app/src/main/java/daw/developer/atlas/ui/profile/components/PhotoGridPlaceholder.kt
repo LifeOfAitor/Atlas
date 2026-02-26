@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun PhotoGridPlaceholder(modifier: Modifier = Modifier) {
+    // Grid visual de fotos (placeholder).
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -30,7 +31,7 @@ fun PhotoGridPlaceholder(modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                repeat(3) { index ->
+                repeat(3) {
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -50,4 +51,3 @@ fun PhotoGridPlaceholder(modifier: Modifier = Modifier) {
         }
     }
 }
-

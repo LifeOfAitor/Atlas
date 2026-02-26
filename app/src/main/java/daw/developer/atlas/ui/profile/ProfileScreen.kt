@@ -1,13 +1,10 @@
 package daw.developer.atlas.ui.profile
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -32,6 +29,7 @@ fun ProfileScreen(
     onNavigateHome: () -> Unit = {},
     onNavigateCreate: () -> Unit = {}
 ) {
+    // Pantalla de perfil con estadisticas, mapa y biblioteca.
     var selectedLibraryTab by remember { mutableStateOf("Grid") }
 
     Column(
@@ -47,7 +45,7 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(12.dp))
             ProfileHeader(
                 userName = userName,
-                bio = "Viajero, cafe y fotos.",
+                bio = "Viajero, cafe y rutas tranquilas.",
                 followers = "2.4k",
                 following = "180",
                 photos = "1.2k"
@@ -76,6 +74,7 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
+        // Footer con navegacion global.
         Footer(
             selected = "Perfil",
             onSelect = { label ->
@@ -90,4 +89,3 @@ fun ProfileScreen(
         )
     }
 }
-

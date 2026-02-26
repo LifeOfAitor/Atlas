@@ -1,6 +1,7 @@
 package daw.developer.atlas.ui.profile.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,7 +25,9 @@ fun LibraryTabsRow(
     onSelect: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Tabs para alternar vistas de biblioteca.
     val tabs = listOf("Grid", "Mapa", "Viajes")
+    val handleSelect = onSelect
 
     Row(
         modifier = modifier
@@ -45,6 +48,7 @@ fun LibraryTabsRow(
                         if (isSelected) Color(0xFFD97942) else Color.Transparent,
                         RoundedCornerShape(10.dp)
                     )
+                    .clickable { handleSelect(tab) }
                     .padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
@@ -65,4 +69,3 @@ fun LibraryTabsRow(
         }
     }
 }
-

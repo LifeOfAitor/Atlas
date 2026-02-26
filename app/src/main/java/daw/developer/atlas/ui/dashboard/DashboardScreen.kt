@@ -31,6 +31,7 @@ fun DashboardScreen(
     onNavigateProfile: () -> Unit = {},
     onNavigateCreate: () -> Unit = {}
 ) {
+    // Pantalla principal del dashboard (estado vacio).
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -73,6 +74,7 @@ fun DashboardScreen(
             }
         }
 
+        // Footer con navegacion global.
         Footer(
             selected = "Inicio",
             onSelect = { label ->

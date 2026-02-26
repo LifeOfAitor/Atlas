@@ -22,6 +22,7 @@ fun ActionButtonsRow(
     onJoinClick: () -> Unit = {},
     onCreateClick: () -> Unit = {}
 ) {
+    // Acciones principales del dashboard (unirse / crear).
     Row(modifier = modifier, horizontalArrangement = Arrangement.End) {
         OutlinedButton(
             onClick = onJoinClick,

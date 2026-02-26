@@ -36,6 +36,7 @@ fun JoinTripDialog(
     onDismiss: () -> Unit,
     onJoin: (String) -> Unit = {}
 ) {
+    // Dialogo para introducir el codigo de invitacion.
     var inviteCode by remember { mutableStateOf("") }
 
     AlertDialog(
@@ -113,4 +114,3 @@ fun JoinTripDialog(
         containerColor = Color(0xFFFDFBF8)
     )
 }
-

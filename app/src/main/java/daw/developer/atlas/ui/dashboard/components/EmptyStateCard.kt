@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun EmptyStateCard(modifier: Modifier = Modifier) {
+    // Estado vacio cuando el usuario no tiene viajes.
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -80,4 +81,3 @@ fun EmptyStateCard(modifier: Modifier = Modifier) {
         }
     }
 }
-

@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
@@ -23,6 +22,7 @@ fun Create(
     onNavigateHome: () -> Unit = {},
     onNavigateProfile: () -> Unit = {}
 ) {
+    // Formulario visual para crear un viaje (solo UI).
     var tripName by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var startDate by remember { mutableStateOf("") }
@@ -63,7 +63,7 @@ fun Create(
                     .height(120.dp)
                     .border(1.dp, Color(0xFFE5DCD3), RoundedCornerShape(12.dp))
                     .background(Color(0xFFFDFBF8))
-                    .clickable { /* Acción para subir foto */ },
+                    .clickable { /* subir foto */ },
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -198,6 +198,7 @@ fun Create(
                 Text("Crear Viaje")
             }
         }
+        // Footer con navegacion global.
         Footer(
             selected = "Crear",
             onSelect = { label ->

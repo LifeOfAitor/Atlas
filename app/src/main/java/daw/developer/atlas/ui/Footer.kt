@@ -26,12 +26,14 @@ fun Footer(
     selectedColor: Color = Color(0xFFFF8C3B),
     unselectedColor: Color = Color(0xFFB0B3C6)
 ) {
+    // Barra de navegacion inferior reutilizable en todas las vistas.
     val items = listOf(
         "Inicio" to Icons.Default.Home,
         "Mapa" to Icons.Default.Place,
         "Crear" to Icons.Default.Add,
         "Perfil" to Icons.Default.Person
     )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
