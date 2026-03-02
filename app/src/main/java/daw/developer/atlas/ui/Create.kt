@@ -17,11 +17,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
+import daw.developer.atlas.TCPConnection
 import daw.developer.atlas.Trip
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +38,8 @@ fun Create(
     var startDate by remember { mutableStateOf("") }
     var endDate by remember { mutableStateOf("") }
     var destination by remember { mutableStateOf("") }
-    var visibility by remember { mutableStateOf("Followers") }
+    var visibility by remember { mutableStateOf("friends") }
+    val scope = rememberCoroutineScope()
 
     var showStartPicker by remember { mutableStateOf(false) }
     var showEndPicker by remember { mutableStateOf(false) }
@@ -43,11 +47,8 @@ fun Create(
     val endPickerState = rememberDatePickerState()
 
     fun formatDate(millis: Long): String {
-        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-        return Instant.ofEpochMilli(millis)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDate()
-            .format(formatter)
+        val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        return formatter.format(Date(millis))
     }
 
     Column(
@@ -218,17 +219,21 @@ fun Create(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                val options = listOf("Privado", "Seguidores", "Publico")
-                options.forEach { option ->
+                val options = listOf(
+                    "Privado" to "private",
+                    "Seguidores" to "friends",
+                    "Publico" to "public"
+                )
+                options.forEach { (label, value) ->
                     Button(
-                        onClick = { visibility = option },
+                        onClick = { visibility = value },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (visibility == option) Color(0xFFF2E8DE) else Color(0xFFFDFBF8),
-                            contentColor = if (visibility == option) Color(0xFFD97942) else Color(0xFF8C8C8C)
+                            containerColor = if (visibility == value) Color(0xFFF2E8DE) else Color(0xFFFDFBF8),
+                            contentColor = if (visibility == value) Color(0xFFD97942) else Color(0xFF8C8C8C)
                         ),
                         modifier = Modifier.weight(1f).padding(horizontal = 2.dp)
                     ) {
-                        Text(option)
+                        Text(label)
                     }
                 }
             }
@@ -252,6 +257,15 @@ fun Create(
                         visibility = visibility
                     )
                     onCreateTrip(newTrip)
+                    scope.launch(Dispatchers.IO) {
+                        try {
+                            TCPConnection.send(
+                                "NEWTRIP:${newTrip.id}:${newTrip.name}:${newTrip.startDate}:${newTrip.endDate}:${newTrip.destination}:${newTrip.visibility}"
+                            )
+                        } catch (e: Exception) {
+                            TCPConnection.newLog("Error enviando viaje: ${e.message}", TCPConnection.LogType.ERROR)
+                        }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()

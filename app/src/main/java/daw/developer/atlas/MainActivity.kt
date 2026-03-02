@@ -35,10 +35,35 @@ class MainActivity : ComponentActivity() {
                 var showJoinDialog by remember { mutableStateOf(false) }
                 val trips = remember { mutableStateListOf<Trip>() }
 
+                fun parseTrips(payload: String): List<Trip> {
+                    if (payload.isBlank()) return emptyList()
+                    return payload.split("|").mapNotNull { rawTrip ->
+                        val parts = rawTrip.split(",")
+                        if (parts.size < 6) return@mapNotNull null
+                        Trip(
+                            id = parts[0].trim(),
+                            name = parts[1].trim(),
+                            startDate = parts[2].trim(),
+                            endDate = parts[3].trim(),
+                            destination = parts[4].trim(),
+                            visibility = parts[5].trim()
+                        )
+                    }
+                }
+
                 LaunchedEffect(Unit) {
                     CommandDecoder.deniedEvent = { args ->
                         loginError = args.reason
                         isLoggedIn = false
+                    }
+                    CommandDecoder.successEvent = { args ->
+                        val payload = args.payload
+                        val count = args.count
+                        if (payload != null && count != null) {
+                            val parsedTrips = parseTrips(payload)
+                            trips.clear()
+                            trips.addAll(parsedTrips)
+                        }
                     }
                     TCPConnection.connectedEvent = {
                         loginError = null
@@ -102,8 +127,7 @@ class MainActivity : ComponentActivity() {
                             Create(
                                 onNavigateHome = { currentScreen = "Dashboard" },
                                 onNavigateProfile = { currentScreen = "Profile" },
-                                onCreateTrip = { trip ->
-                                    trips.add(trip)
+                                onCreateTrip = {
                                     currentScreen = "Dashboard"
                                 }
                             )

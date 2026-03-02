@@ -57,12 +57,22 @@ object CommandDecoder {
         fun execute(args: Array<String>)
     }
 
+    // Arrakasta gertaera
+    class SuccessEventArgs(val count: Int?, val payload: String?, val context: String?)
+    var successEvent: ((SuccessEventArgs) -> Unit)? = null
+
     // Saioa ondo hasita komandoa
     private class SuccessCommand : ICommand {
-        override val format: String = "SUCCESS:<context>"
+        override val format: String = "SUCCESS:..."
 
         override fun execute(args: Array<String>) {
             TCPConnection.connected = true
+
+            val count = args.getOrNull(0)?.toIntOrNull()
+            val payload = if (args.size >= 2) args.drop(1).joinToString(":") else null
+            val context = if (count == null) args.getOrNull(0) else null
+
+            successEvent?.invoke(SuccessEventArgs(count, payload, context))
         }
     }
 
@@ -86,7 +96,7 @@ object CommandDecoder {
 
     // Datu motak
     enum class DataType {
-        // TODO
+        TRIP
     }
 
     // Datu berriko komandoa
