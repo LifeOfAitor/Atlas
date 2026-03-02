@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,19 +17,38 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
+import daw.developer.atlas.Trip
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.UUID
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Create(
     onNavigateHome: () -> Unit = {},
-    onNavigateProfile: () -> Unit = {}
+    onNavigateProfile: () -> Unit = {},
+    onCreateTrip: (Trip) -> Unit = {}
 ) {
     // Formulario visual para crear un viaje (solo UI).
     var tripName by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
     var startDate by remember { mutableStateOf("") }
     var endDate by remember { mutableStateOf("") }
     var destination by remember { mutableStateOf("") }
     var visibility by remember { mutableStateOf("Followers") }
+
+    var showStartPicker by remember { mutableStateOf(false) }
+    var showEndPicker by remember { mutableStateOf(false) }
+    val startPickerState = rememberDatePickerState()
+    val endPickerState = rememberDatePickerState()
+
+    fun formatDate(millis: Long): String {
+        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+        return Instant.ofEpochMilli(millis)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate()
+            .format(formatter)
+    }
 
     Column(
         modifier = Modifier
@@ -88,30 +108,18 @@ fun Create(
                 )
             )
             Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
-                label = { Text("Descripcion", color = Color(0xFF8C8C8C)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFFE5DCD3),
-                    unfocusedBorderColor = Color(0xFFE5DCD3),
-                    cursorColor = Color(0xFF1B1B1B),
-                    focusedLabelColor = Color(0xFF1B1B1B),
-                    unfocusedLabelColor = Color(0xFF8C8C8C),
-                    focusedTextColor = Color(0xFF1B1B1B),
-                    unfocusedTextColor = Color(0xFF1B1B1B)
-                )
-            )
-            Spacer(Modifier.height(12.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = startDate,
-                    onValueChange = { startDate = it },
+                    onValueChange = { },
                     label = { Text("Fecha de inicio", color = Color(0xFF8C8C8C)) },
                     modifier = Modifier.weight(1f),
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = { showStartPicker = true }) {
+                            Icon(Icons.Filled.DateRange, contentDescription = "Seleccionar fecha de inicio")
+                        }
+                    },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFE5DCD3),
                         unfocusedBorderColor = Color(0xFFE5DCD3),
@@ -124,9 +132,15 @@ fun Create(
                 )
                 OutlinedTextField(
                     value = endDate,
-                    onValueChange = { endDate = it },
+                    onValueChange = { },
                     label = { Text("Fin del Viaje", color = Color(0xFF8C8C8C)) },
                     modifier = Modifier.weight(1f),
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = { showEndPicker = true }) {
+                            Icon(Icons.Filled.DateRange, contentDescription = "Seleccionar fecha de fin")
+                        }
+                    },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFE5DCD3),
                         unfocusedBorderColor = Color(0xFFE5DCD3),
@@ -138,7 +152,50 @@ fun Create(
                     )
                 )
             }
-            Spacer(Modifier.height(12.dp))
+            if (showStartPicker) {
+                DatePickerDialog(
+                    onDismissRequest = { showStartPicker = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            startPickerState.selectedDateMillis?.let { millis ->
+                                startDate = formatDate(millis)
+                            }
+                            showStartPicker = false
+                        }) {
+                            Text("Aceptar")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showStartPicker = false }) {
+                            Text("Cancelar")
+                        }
+                    }
+                ) {
+                    DatePicker(state = startPickerState)
+                }
+            }
+            if (showEndPicker) {
+                DatePickerDialog(
+                    onDismissRequest = { showEndPicker = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            endPickerState.selectedDateMillis?.let { millis ->
+                                endDate = formatDate(millis)
+                            }
+                            showEndPicker = false
+                        }) {
+                            Text("Aceptar")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showEndPicker = false }) {
+                            Text("Cancelar")
+                        }
+                    }
+                ) {
+                    DatePicker(state = endPickerState)
+                }
+            }
             OutlinedTextField(
                 value = destination,
                 onValueChange = { destination = it },
@@ -185,7 +242,17 @@ fun Create(
             }
             Spacer(Modifier.height(15.dp))
             Button(
-                onClick = {},
+                onClick = {
+                    val newTrip = Trip(
+                        id = UUID.randomUUID().toString(),
+                        name = tripName.trim(),
+                        startDate = startDate,
+                        endDate = endDate,
+                        destination = destination.trim(),
+                        visibility = visibility
+                    )
+                    onCreateTrip(newTrip)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),

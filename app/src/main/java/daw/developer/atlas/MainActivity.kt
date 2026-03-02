@@ -6,10 +6,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import daw.developer.atlas.Trip
 import daw.developer.atlas.ui.Create
 import daw.developer.atlas.ui.Login
 import daw.developer.atlas.ui.dashboard.DashboardScreen
@@ -31,6 +33,7 @@ class MainActivity : ComponentActivity() {
                 var currentUser by remember { mutableStateOf("") }
                 var currentScreen by remember { mutableStateOf("Dashboard") }
                 var showJoinDialog by remember { mutableStateOf(false) }
+                val trips = remember { mutableStateListOf<Trip>() }
 
                 LaunchedEffect(Unit) {
                     CommandDecoder.deniedEvent = { args ->
@@ -81,6 +84,7 @@ class MainActivity : ComponentActivity() {
                         "Dashboard" -> {
                             DashboardScreen(
                                 userName = currentUser.ifBlank { "usuario" },
+                                trips = trips,
                                 onCreateTrip = { currentScreen = "Create" },
                                 onJoinTrip = { showJoinDialog = true },
                                 onNavigateProfile = { currentScreen = "Profile" },
@@ -97,7 +101,11 @@ class MainActivity : ComponentActivity() {
                         "Create" -> {
                             Create(
                                 onNavigateHome = { currentScreen = "Dashboard" },
-                                onNavigateProfile = { currentScreen = "Profile" }
+                                onNavigateProfile = { currentScreen = "Profile" },
+                                onCreateTrip = { trip ->
+                                    trips.add(trip)
+                                    currentScreen = "Dashboard"
+                                }
                             )
                         }
                         else -> {

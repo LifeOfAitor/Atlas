@@ -23,7 +23,7 @@ fun Login(
     onLogin: (server: String, username: String, password: String) -> Unit,
     onNavigateRegister: () -> Unit
 ) {
-    var server by remember { mutableStateOf("10.14.0.111:13000") }
+    var server by remember { mutableStateOf("10.14.0.123:13000") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
