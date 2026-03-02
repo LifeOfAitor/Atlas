@@ -22,7 +22,12 @@ object CommandDecoder {
         command?.let { cmd ->
             // Komandoa lortu
             val splitCommand = cmd.trim().split(':')
-            val commandName = splitCommand[0].trim().removeRange(0, 1)
+            val rawName = splitCommand[0].trim()
+            val commandName = if (rawName.isNotEmpty() && !rawName[0].isLetterOrDigit()) {
+                rawName.substring(1)
+            } else {
+                rawName
+            }
 
             // Komandoaren argumentuak lortu
             val args = splitCommand.drop(1).toTypedArray()
