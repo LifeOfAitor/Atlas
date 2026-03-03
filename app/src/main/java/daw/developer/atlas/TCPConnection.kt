@@ -1,5 +1,7 @@
 package daw.developer.atlas
 
+import android.content.Context
+import android.provider.OpenableColumns
 import kotlinx.coroutines.*
 import java.io.*
 import java.net.InetAddress
@@ -17,6 +19,7 @@ object TCPConnection {
     private var client: Socket? = null
     private var reader: BufferedReader? = null
     private var writer: PrintWriter? = null
+    private val sendLock = Any()
 
     // Bezeroa funtzionatzen ari den
     @Volatile
@@ -212,8 +215,10 @@ object TCPConnection {
     fun send(mezua: String) {
         if (alive) {
             try {
-                writer?.println(mezua)
-                writer?.flush()
+                synchronized(sendLock) {
+                    writer?.println(mezua)
+                    writer?.flush()
+                }
                 if (mezua != "PING") { // Ez log-eatu PING mezuak
                     newLog("Bidalita: $mezua", LogType.INFO)
                 }
@@ -224,6 +229,82 @@ object TCPConnection {
         } else {
             newLog("Ezin da mezua bidali: konexiorik ez", LogType.WARN)
         }
+    }
+
+    suspend fun uploadImage(context: Context, tripId: String, imageUri: android.net.Uri): Boolean {
+        return withContext(Dispatchers.IO) {
+            if (!alive || client == null) {
+                newLog("Ezin da irudia bidali: konexiorik ez", LogType.WARN)
+                return@withContext false
+            }
+
+            val resolver = context.contentResolver
+            val (fileName, fileSize) = resolveFileMeta(resolver, imageUri)
+            if (fileSize <= 0L) {
+                newLog("Ezin da irudia bidali: tamaina ezezaguna", LogType.ERROR)
+                return@withContext false
+            }
+
+            val input = resolver.openInputStream(imageUri)
+            if (input == null) {
+                newLog("Ezin da irudia ireki", LogType.ERROR)
+                return@withContext false
+            }
+
+            try {
+                synchronized(sendLock) {
+                    writer?.println("UPLOAD_IMAGE:$tripId:$fileName:$fileSize")
+                    writer?.flush()
+
+                    val output = client!!.getOutputStream()
+                    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                    var read = input.read(buffer)
+                    while (read >= 0) {
+                        if (read > 0) {
+                            output.write(buffer, 0, read)
+                        }
+                        read = input.read(buffer)
+                    }
+                    output.flush()
+                }
+                newLog("Irudia bidalita: $fileName ($fileSize bytes)", LogType.INFO)
+                true
+            } catch (e: Exception) {
+                newLog("Errorea irudia bidaltzean: ${e.message ?: "Errore ezezaguna"}", LogType.ERROR)
+                false
+            } finally {
+                try {
+                    input.close()
+                } catch (_: Exception) {
+                }
+            }
+        }
+    }
+
+    private fun resolveFileMeta(
+        resolver: android.content.ContentResolver,
+        imageUri: android.net.Uri
+    ): Pair<String, Long> {
+        var name = "image.jpg"
+        var size = -1L
+        resolver.query(imageUri, null, null, null, null)?.use { cursor ->
+            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+            if (cursor.moveToFirst()) {
+                if (nameIndex >= 0) {
+                    name = cursor.getString(nameIndex) ?: name
+                }
+                if (sizeIndex >= 0) {
+                    size = cursor.getLong(sizeIndex)
+                }
+            }
+        }
+        if (size <= 0L) {
+            resolver.openFileDescriptor(imageUri, "r")?.use { pfd ->
+                if (pfd.statSize > 0) size = pfd.statSize
+            }
+        }
+        return name to size
     }
 
     fun closeClient(log: String? = null) {

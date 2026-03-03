@@ -23,6 +23,7 @@ import java.net.InetAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,6 +41,11 @@ class MainActivity : ComponentActivity() {
                 var selectedTrip by remember { mutableStateOf<Trip?>(null) }
                 var tripMembers by remember { mutableStateOf<List<String>>(emptyList()) }
                 var awaitingTripMembers by remember { mutableStateOf(false) }
+                var awaitingUploadUrl by remember { mutableStateOf(false) }
+                var lastUploadedUrl by remember { mutableStateOf<String?>(null) }
+                var awaitingTripPhotos by remember { mutableStateOf(false) }
+                var tripPhotoUrls by remember { mutableStateOf<List<String>>(emptyList()) }
+                val context = LocalContext.current
 
                 fun parseTrips(payload: String): List<Trip> {
                     if (payload.isBlank()) return emptyList()
@@ -65,7 +71,13 @@ class MainActivity : ComponentActivity() {
                     CommandDecoder.successEvent = { args ->
                         val payload = args.payload
                         val count = args.count
-                        if (awaitingTripMembers) {
+                        val contextUrl = args.context
+                        if (awaitingUploadUrl) {
+                            if (!contextUrl.isNullOrBlank()) {
+                                lastUploadedUrl = contextUrl
+                            }
+                            awaitingUploadUrl = false
+                        } else if (awaitingTripMembers) {
                             val members = payload
                                 ?.split(",")
                                 ?.mapNotNull { it.trim().takeIf { name -> name.isNotEmpty() } }
@@ -76,6 +88,13 @@ class MainActivity : ComponentActivity() {
                                 members
                             }
                             awaitingTripMembers = false
+                        } else if (awaitingTripPhotos) {
+                            val urls = payload
+                                ?.split("|")
+                                ?.mapNotNull { it.trim().takeIf { url -> url.isNotEmpty() } }
+                                ?: emptyList()
+                            tripPhotoUrls = urls
+                            awaitingTripPhotos = false
                         } else if (payload != null && count != null) {
                             val parsedTrips = parseTrips(payload)
                             trips.clear()
@@ -101,6 +120,19 @@ class MainActivity : ComponentActivity() {
                             awaitingTripMembers = true
                             withContext(Dispatchers.IO) {
                                 TCPConnection.send("GETTRIPMEMBERS:$tripId")
+                            }
+                        }
+                    }
+                }
+
+                LaunchedEffect(currentScreen, selectedTrip?.id) {
+                    if (currentScreen == "TripGallery") {
+                        val tripId = selectedTrip?.id
+                        if (!tripId.isNullOrBlank()) {
+                            tripPhotoUrls = emptyList()
+                            awaitingTripPhotos = true
+                            withContext(Dispatchers.IO) {
+                                TCPConnection.send("GETTRIPHOTOS:$tripId")
                             }
                         }
                     }
@@ -224,7 +256,18 @@ class MainActivity : ComponentActivity() {
                             } else {
                                 TripGalleryScreen(
                                     trip = trip,
-                                    onBack = { currentScreen = "TripDetail" }
+                                    onBack = { currentScreen = "TripDetail" },
+                                    onPhotoSelected = { uri ->
+                                        awaitingUploadUrl = true
+                                        scope.launch(Dispatchers.IO) {
+                                            val ok = TCPConnection.uploadImage(context, trip.id, uri)
+                                            if (!ok) {
+                                                awaitingUploadUrl = false
+                                            }
+                                        }
+                                    },
+                                    uploadedUrl = lastUploadedUrl,
+                                    photoUrls = tripPhotoUrls
                                 )
                             }
                         }
