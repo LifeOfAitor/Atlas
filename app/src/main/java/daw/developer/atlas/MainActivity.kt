@@ -18,7 +18,9 @@ import daw.developer.atlas.ui.dashboard.DashboardScreen
 import daw.developer.atlas.ui.dashboard.components.JoinTripDialog
 import daw.developer.atlas.ui.profile.ProfileScreen
 import daw.developer.atlas.ui.theme.AtlasTheme
+import daw.developer.atlas.ui.trip.TripDetailScreen
 import java.net.InetAddress
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -34,6 +36,7 @@ class MainActivity : ComponentActivity() {
                 var currentScreen by remember { mutableStateOf("Dashboard") }
                 var showJoinDialog by remember { mutableStateOf(false) }
                 val trips = remember { mutableStateListOf<Trip>() }
+                var selectedTrip by remember { mutableStateOf<Trip?>(null) }
 
                 fun parseTrips(payload: String): List<Trip> {
                     if (payload.isBlank()) return emptyList()
@@ -113,7 +116,11 @@ class MainActivity : ComponentActivity() {
                                 onCreateTrip = { currentScreen = "Create" },
                                 onJoinTrip = { showJoinDialog = true },
                                 onNavigateProfile = { currentScreen = "Profile" },
-                                onNavigateCreate = { currentScreen = "Create" }
+                                onNavigateCreate = { currentScreen = "Create" },
+                                onTripClick = { trip ->
+                                    selectedTrip = trip
+                                    currentScreen = "TripDetail"
+                                }
                             )
 
                             if (showJoinDialog) {
@@ -125,18 +132,65 @@ class MainActivity : ComponentActivity() {
                         }
                         "Create" -> {
                             Create(
-                                onNavigateHome = { currentScreen = "Dashboard" },
-                                onNavigateProfile = { currentScreen = "Profile" },
+                                onNavigateHome = {
+                                    selectedTrip = null
+                                    currentScreen = "Dashboard"
+                                },
+                                onNavigateProfile = {
+                                    selectedTrip = null
+                                    currentScreen = "Profile"
+                                },
                                 onCreateTrip = {
+                                    selectedTrip = null
                                     currentScreen = "Dashboard"
                                 }
                             )
                         }
+                        "TripDetail" -> {
+                            val trip = selectedTrip
+                            if (trip == null) {
+                                LaunchedEffect(Unit) {
+                                    currentScreen = "Dashboard"
+                                }
+                            } else {
+                                TripDetailScreen(
+                                    trip = trip,
+                                    creatorName = currentUser.ifBlank { "usuario" },
+                                    onInviteTraveler = { username, tripId ->
+                                        scope.launch(Dispatchers.IO) {
+                                            TCPConnection.send("ADDUSERTOTRIP:$username:$tripId")
+                                        }
+                                    },
+                                    onBack = {
+                                        selectedTrip = null
+                                        currentScreen = "Dashboard"
+                                    },
+                                    onNavigateHome = {
+                                        selectedTrip = null
+                                        currentScreen = "Dashboard"
+                                    },
+                                    onNavigateCreate = {
+                                        selectedTrip = null
+                                        currentScreen = "Create"
+                                    },
+                                    onNavigateProfile = {
+                                        selectedTrip = null
+                                        currentScreen = "Profile"
+                                    }
+                                )
+                            }
+                        }
                         else -> {
                             ProfileScreen(
                                 userName = currentUser.ifBlank { "usuario" },
-                                onNavigateHome = { currentScreen = "Dashboard" },
-                                onNavigateCreate = { currentScreen = "Create" }
+                                onNavigateHome = {
+                                    selectedTrip = null
+                                    currentScreen = "Dashboard"
+                                },
+                                onNavigateCreate = {
+                                    selectedTrip = null
+                                    currentScreen = "Create"
+                                }
                             )
                         }
                     }

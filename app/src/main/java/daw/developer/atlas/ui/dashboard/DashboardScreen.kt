@@ -1,6 +1,7 @@
 package daw.developer.atlas.ui.dashboard
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,7 +35,8 @@ fun DashboardScreen(
     onCreateTrip: () -> Unit = {},
     onJoinTrip: () -> Unit = {},
     onNavigateProfile: () -> Unit = {},
-    onNavigateCreate: () -> Unit = {}
+    onNavigateCreate: () -> Unit = {},
+    onTripClick: (Trip) -> Unit = {}
 ) {
     // Pantalla principal del dashboard (estado vacio).
     Column(
@@ -80,7 +82,7 @@ fun DashboardScreen(
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         trips.forEach { trip ->
-                            TripCard(trip = trip)
+                            TripCard(trip = trip, onClick = { onTripClick(trip) })
                         }
                     }
                 }
@@ -104,9 +106,11 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun TripCard(trip: Trip, modifier: Modifier = Modifier) {
+private fun TripCard(trip: Trip, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = Color(0xFFFDFBF8))
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
