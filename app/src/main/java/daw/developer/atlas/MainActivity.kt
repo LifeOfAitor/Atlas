@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import daw.developer.atlas.ui.Create
 import daw.developer.atlas.ui.Login
+import daw.developer.atlas.ui.Register
 import daw.developer.atlas.ui.dashboard.DashboardScreen
 import daw.developer.atlas.ui.dashboard.components.JoinTripDialog
 import daw.developer.atlas.ui.profile.ProfileScreen
@@ -34,8 +35,11 @@ class MainActivity : ComponentActivity() {
                 val scope = rememberCoroutineScope()
                 var isLoggedIn by remember { mutableStateOf(false) }
                 var loginError by remember { mutableStateOf<String?>(null) }
+                var registerError by remember { mutableStateOf<String?>(null) }
                 var currentUser by remember { mutableStateOf("") }
+                var serverAddress by remember { mutableStateOf("") }
                 var currentScreen by remember { mutableStateOf("Dashboard") }
+                var showRegister by remember { mutableStateOf(false) }
                 var showJoinDialog by remember { mutableStateOf(false) }
                 val trips = remember { mutableStateListOf<Trip>() }
                 var selectedTrip by remember { mutableStateOf<Trip?>(null) }
@@ -139,33 +143,73 @@ class MainActivity : ComponentActivity() {
                 }
 
                 if (!isLoggedIn) {
-                    Login(
-                        loginError = loginError,
-                        onLogin = { server, username, password ->
-                            loginError = null
-                            currentUser = username
-                            scope.launch {
-                                val parts = server.split(":")
-                                if (parts.size == 2) {
-                                    val host = parts[0]
-                                    val port = parts[1].toIntOrNull()
-                                    if (port != null) {
-                                        TCPConnection.login(
-                                            InetAddress.getByName(host),
-                                            port,
-                                            username,
-                                            password
-                                        )
+                    if (!showRegister) {
+                        Login(
+                            loginError = loginError,
+                            onLogin = { server, username, password ->
+                                loginError = null
+                                currentUser = username
+                                serverAddress = server
+                                scope.launch {
+                                    val parts = server.split(":")
+                                    if (parts.size == 2) {
+                                        val host = parts[0]
+                                        val port = parts[1].toIntOrNull()
+                                        if (port != null) {
+                                            TCPConnection.login(
+                                                InetAddress.getByName(host),
+                                                port,
+                                                username,
+                                                password
+                                            )
+                                        } else {
+                                            loginError = "Puerto invalido"
+                                        }
                                     } else {
-                                        loginError = "Puerto invalido"
+                                        loginError = "Formato IP:PUERTO"
                                     }
-                                } else {
-                                    loginError = "Formato IP:PUERTO"
                                 }
-                            }
-                        },
-                        onNavigateRegister = { }
-                    )
+                            },
+                            onNavigateRegister = { showRegister = true }
+                        )
+                    } else {
+                        Register(
+                            onNavigateBack = {
+                                showRegister = false
+                                registerError = null
+                            },
+                            onRegister = { username, email, password ->
+                                registerError = null
+                                scope.launch {
+                                    val parts = serverAddress.split(":")
+                                    if (parts.size == 2) {
+                                        val host = parts[0]
+                                        val port = parts[1].toIntOrNull()
+                                        if (port != null) {
+                                            try {
+                                                TCPConnection.signup(
+                                                    InetAddress.getByName(host),
+                                                    port,
+                                                    username,
+                                                    email,
+                                                    password
+                                                )
+                                                // Mostrar mensaje de éxito y volver al login
+                                                showRegister = false
+                                            } catch (e: Exception) {
+                                                registerError = "Error al crear la cuenta: ${e.message}"
+                                            }
+                                        } else {
+                                            registerError = "Puerto invalido"
+                                        }
+                                    } else {
+                                        registerError = "Por favor, ingresa primero el servidor en el login"
+                                    }
+                                }
+                            },
+                            registerError = registerError
+                        )
+                    }
                 } else {
                     when (currentScreen) {
                         "Dashboard" -> {

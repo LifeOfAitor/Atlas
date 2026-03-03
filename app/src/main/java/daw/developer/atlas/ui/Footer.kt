@@ -82,5 +82,5 @@ fun Footer(
 @Composable
 fun FooterPreview() {
     var selected by remember { mutableStateOf("") }
-    Footer(selected = selected, onSelect = { selected = it })
+    Footer(selected = selected, onSelect = { newSelection -> selected = newSelection })
 }

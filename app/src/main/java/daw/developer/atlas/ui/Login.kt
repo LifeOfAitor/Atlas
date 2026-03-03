@@ -85,12 +85,19 @@ fun Login(
             Text("INICIAR SESION", color = Color.White)
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Crear una cuenta",
-            color = Color.Black,
-            fontSize = 16.sp,
-            modifier = Modifier.clickable { onNavigateRegister() }
-        )
+        Button(
+            onClick = { onNavigateRegister() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            shape = RoundedCornerShape(8.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFD97942),
+                contentColor = Color.White
+            )
+        ) {
+            Text("CREAR UNA CUENTA", color = Color.White)
+        }
     }
 }
 

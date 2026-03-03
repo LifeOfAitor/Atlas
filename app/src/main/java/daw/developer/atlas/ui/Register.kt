@@ -13,10 +13,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-fun Register() {
+fun Register(
+    onNavigateBack: () -> Unit = {},
+    onRegister: (username: String, email: String, password: String) -> Unit = { _, _, _ -> },
+    registerError: String? = null
+) {
     var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var repeatPassword by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf(registerError) }
+
+    LaunchedEffect(registerError) {
+        errorMessage = registerError
+    }
 
     Column(
         modifier = Modifier
@@ -42,6 +52,16 @@ fun Register() {
         )
         Spacer(modifier = Modifier.height(16.dp))
         OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Correo Electronico") },
+            singleLine = true,
+            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+        OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             label = { Text("Contraseña") },
@@ -60,9 +80,33 @@ fun Register() {
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
+
         Spacer(modifier = Modifier.height(40.dp))
+
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage!!,
+                color = Color.Red,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
+
         Button(
-            onClick = {},
+            onClick = {
+                errorMessage = when {
+                    username.isBlank() -> "El usuario no puede estar vacío"
+                    email.isBlank() -> "El correo no puede estar vacío"
+                    password.isBlank() -> "La contraseña no puede estar vacía"
+                    repeatPassword.isBlank() -> "Debe repetir la contraseña"
+                    password != repeatPassword -> "Las contraseñas no coinciden"
+                    !email.contains("@") -> "El correo debe ser válido"
+                    else -> {
+                        errorMessage = null
+                        onRegister(username, email, password)
+                        null
+                    }
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
@@ -73,18 +117,17 @@ fun Register() {
         }
         Spacer(modifier = Modifier.height(16.dp))
         Button(
-            onClick = {},
+            onClick = { onNavigateBack() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
             shape = RoundedCornerShape(8.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFFFC107),
-                contentColor = Color.Black
-            ),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+                containerColor = Color(0xFFD97942),
+                contentColor = Color.White
+            )
         ) {
-            Text("Usar cuenta de Google")
+            Text("VOLVER AL LOGIN", color = Color.White)
         }
     }
 }
@@ -92,5 +135,9 @@ fun Register() {
 @Preview(showBackground = true)
 @Composable
 fun RegisterPreview() {
-    Register()
+    Register(
+        onNavigateBack = {},
+        onRegister = { _, _, _ -> },
+        registerError = null
+    )
 }
