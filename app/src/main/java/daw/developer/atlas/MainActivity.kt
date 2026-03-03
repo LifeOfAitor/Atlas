@@ -11,7 +11,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import daw.developer.atlas.Trip
 import daw.developer.atlas.ui.Create
 import daw.developer.atlas.ui.Login
 import daw.developer.atlas.ui.dashboard.DashboardScreen
@@ -22,6 +21,7 @@ import daw.developer.atlas.ui.trip.TripDetailScreen
 import java.net.InetAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,6 +37,8 @@ class MainActivity : ComponentActivity() {
                 var showJoinDialog by remember { mutableStateOf(false) }
                 val trips = remember { mutableStateListOf<Trip>() }
                 var selectedTrip by remember { mutableStateOf<Trip?>(null) }
+                var tripMembers by remember { mutableStateOf<List<String>>(emptyList()) }
+                var awaitingTripMembers by remember { mutableStateOf(false) }
 
                 fun parseTrips(payload: String): List<Trip> {
                     if (payload.isBlank()) return emptyList()
@@ -62,7 +64,18 @@ class MainActivity : ComponentActivity() {
                     CommandDecoder.successEvent = { args ->
                         val payload = args.payload
                         val count = args.count
-                        if (payload != null && count != null) {
+                        if (awaitingTripMembers) {
+                            val members = payload
+                                ?.split(",")
+                                ?.mapNotNull { it.trim().takeIf { name -> name.isNotEmpty() } }
+                                ?: emptyList()
+                            tripMembers = if (members.isEmpty()) {
+                                listOf(currentUser.ifBlank { "usuario" })
+                            } else {
+                                members
+                            }
+                            awaitingTripMembers = false
+                        } else if (payload != null && count != null) {
                             val parsedTrips = parseTrips(payload)
                             trips.clear()
                             trips.addAll(parsedTrips)
@@ -76,6 +89,19 @@ class MainActivity : ComponentActivity() {
                     TCPConnection.disconnectedEvent = {
                         isLoggedIn = false
                         currentScreen = "Dashboard"
+                    }
+                }
+
+                LaunchedEffect(currentScreen, selectedTrip?.id) {
+                    if (currentScreen == "TripDetail") {
+                        val tripId = selectedTrip?.id
+                        if (!tripId.isNullOrBlank()) {
+                            tripMembers = listOf(currentUser.ifBlank { "usuario" })
+                            awaitingTripMembers = true
+                            withContext(Dispatchers.IO) {
+                                TCPConnection.send("GETTRIPMEMBERS:$tripId")
+                            }
+                        }
                     }
                 }
 
@@ -156,6 +182,11 @@ class MainActivity : ComponentActivity() {
                                 TripDetailScreen(
                                     trip = trip,
                                     creatorName = currentUser.ifBlank { "usuario" },
+                                    participants = if (tripMembers.isEmpty()) {
+                                        listOf(currentUser.ifBlank { "usuario" })
+                                    } else {
+                                        tripMembers
+                                    },
                                     onInviteTraveler = { username, tripId ->
                                         scope.launch(Dispatchers.IO) {
                                             TCPConnection.send("ADDUSERTOTRIP:$username:$tripId")
