@@ -75,6 +75,17 @@ class MainActivity : ComponentActivity() {
                         if (awaitingUploadUrl) {
                             if (!contextUrl.isNullOrBlank()) {
                                 lastUploadedUrl = contextUrl
+                                if (!tripPhotoUrls.contains(contextUrl)) {
+                                    tripPhotoUrls = tripPhotoUrls + contextUrl
+                                }
+                                val tripId = selectedTrip?.id
+                                if (currentScreen == "TripGallery" && !tripId.isNullOrBlank()) {
+                                    awaitingTripPhotos = true
+                                    scope.launch(Dispatchers.IO) {
+                                        kotlinx.coroutines.delay(300)
+                                        TCPConnection.send("GETTRIPHOTOS:$tripId")
+                                    }
+                                }
                             }
                             awaitingUploadUrl = false
                         } else if (awaitingTripMembers) {
