@@ -2,6 +2,7 @@ package daw.developer.atlas.ui.trip
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -48,7 +49,11 @@ import daw.developer.atlas.Trip
 import daw.developer.atlas.ui.Footer
 import daw.developer.atlas.ui.theme.AtlasTheme
 
-private data class TripAction(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
+private data class TripAction(
+    val label: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val onClick: () -> Unit = {}
+)
 data class TripStat(val value: String, val label: String)
 
 @Composable
@@ -64,6 +69,7 @@ fun TripDetailScreen(
     ),
     onInviteTraveler: (String, String) -> Unit = { _, _ -> },
     onAddStat: () -> Unit = {},
+    onOpenGallery: () -> Unit = {},
     onBack: () -> Unit = {},
     onNavigateHome: () -> Unit = {},
     onNavigateCreate: () -> Unit = {},
@@ -74,7 +80,7 @@ fun TripDetailScreen(
 
     val actions = listOf(
         TripAction("Bandeja", Icons.Default.Email),
-        TripAction("Galeria", Icons.Default.Add),
+        TripAction("Galeria", Icons.Default.Add, onOpenGallery),
         TripAction("Cuentas", Icons.Default.Person),
         TripAction("Mapa", Icons.Default.Place)
     )
@@ -261,6 +267,7 @@ private fun TripActionButton(action: TripAction, modifier: Modifier = Modifier) 
     Column(
         modifier = modifier
             .width(78.dp)
+            .clickable { action.onClick() }
             .border(1.dp, Color(0xFFE5DCD3), RoundedCornerShape(16.dp))
             .background(Color(0xFFFDFBF8), RoundedCornerShape(16.dp))
             .padding(vertical = 10.dp, horizontal = 8.dp),

@@ -18,6 +18,7 @@ import daw.developer.atlas.ui.dashboard.components.JoinTripDialog
 import daw.developer.atlas.ui.profile.ProfileScreen
 import daw.developer.atlas.ui.theme.AtlasTheme
 import daw.developer.atlas.ui.trip.TripDetailScreen
+import daw.developer.atlas.ui.trip.TripGalleryScreen
 import java.net.InetAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -192,6 +193,9 @@ class MainActivity : ComponentActivity() {
                                             TCPConnection.send("ADDUSERTOTRIP:$username:$tripId")
                                         }
                                     },
+                                    onOpenGallery = {
+                                        currentScreen = "TripGallery"
+                                    },
                                     onBack = {
                                         selectedTrip = null
                                         currentScreen = "Dashboard"
@@ -208,6 +212,19 @@ class MainActivity : ComponentActivity() {
                                         selectedTrip = null
                                         currentScreen = "Profile"
                                     }
+                                )
+                            }
+                        }
+                        "TripGallery" -> {
+                            val trip = selectedTrip
+                            if (trip == null) {
+                                LaunchedEffect(Unit) {
+                                    currentScreen = "Dashboard"
+                                }
+                            } else {
+                                TripGalleryScreen(
+                                    trip = trip,
+                                    onBack = { currentScreen = "TripDetail" }
                                 )
                             }
                         }
